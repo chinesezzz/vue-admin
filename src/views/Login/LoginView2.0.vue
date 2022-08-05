@@ -7,7 +7,7 @@
           </li>
         </ul>
         <!-- 表单 start -->
-        <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleFormRef" class="login-form" size="default">
+        <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleForm" class="login-form" size="default">
           <el-form-item prop="username" class="item-from">
           <label>邮箱</label>
             <el-input type="text" v-model="ruleForm.username" autocomplete="off"></el-input>
@@ -44,30 +44,11 @@
 </template>
 <script>
 import { stripscript, validateEmail, validatePSW, validateVcode } from '@/uitls/validate';
-import { onMounted, reactive, ref, refs } from 'vue';
-import { FormInstance } from 'element-plus';
-
 export default {
   name: 'login',
-  setup(props, context) {
-    // 存放Data数据、生命周期、自定义函数
-    const menuTab = reactive([
-        {txt: '登录', current: true, type: 'login'},
-        {txt: '注册', current: false, type: 'register'}
-      ]);
-      // 模块值
-    const model = ref('login');
-    // 表单绑定数据
-    const ruleFormRef = ref(null);
-    const ruleForm = reactive({
-          username: '',
-          password: '',
-          passwords: '',
-          code: ''
-        });
-    
+  data() {
       // 验证用户名
-      let validateUserName = (rule, value, callback) => {
+      var validateUserName = (rule, value, callback) => {
         
         if (value === '') {
           callback(new Error('请输入用户名'));
@@ -79,10 +60,10 @@ export default {
         }
       };
       // 验证密码
-      let validatePassword = (rule, value, callback) => {
+      var validatePassword = (rule, value, callback) => {
         // 过滤数据
-        ruleForm.password = stripscript(value);
-        value = ruleForm.password;
+        this.ruleForm.password = stripscript(value);
+        value = this.ruleForm.password;
 
         if (value === '') {
           callback(new Error('请输入密码'));
@@ -94,13 +75,13 @@ export default {
         }
       };
       // 验证重复密码
-      let validatePasswords = (rule, value, callback) => {
+      var validatePasswords = (rule, value, callback) => {
         // 过滤数据
-        ruleForm.passwords = stripscript(value);
-        value = ruleForm.passwords;
+        this.ruleForm.passwords = stripscript(value);
+        value = this.ruleForm.passwords;
         if (value === '') {
           callback(new Error('请输入重复密码'));
-        }  else if(value != ruleForm.password){
+        }  else if(value != this.ruleForm.password){
           callback(new Error('重复密码错误'));
         }
         else {
@@ -108,7 +89,7 @@ export default {
         }
       };
       // 验证验证码
-      let validateCode = (rule, value, callback) => {
+      var validateCode = (rule, value, callback) => {
         if (!value) {
           return callback(new Error('验证码不能为空'));
         } else if(!validateVcode(value)){
@@ -118,8 +99,19 @@ export default {
           callback();
         }
       };
-    // 表单的验证
-    const  rules = reactive({
+    return {
+      menuTab: [
+        {txt: '登录', current: true, type: 'login'},
+        {txt: '注册', current: false, type: 'register'}
+      ],
+      // 模块值
+      model: 'login',
+      ruleForm: {
+          username: '',
+          password: '',
+          code: ''
+        },
+        rules: {
           username: [
             { validator: validateUserName, trigger: 'blur' }
           ],
@@ -132,49 +124,27 @@ export default {
           code: [
             { validator: validateCode, trigger: 'blur' }
           ]
-        });
-
-    /**
-     * 声明函数
-     */
-    const toggleMenu = (data => {
-      menuTab.forEach(elem => {
+        }
+    }
+  },
+  methods: {
+    toggleMenu(data){
+      this.menuTab.forEach(elem => {
         elem.current = false;
       });
       data.current = true;
-      model.value = data.type;
-    });
-
-    const submitForm = () => {
-      ruleFormRef.value.validate((valid) => {
-        if (valid) {
-          alert('submit!');
-        } else {
-          console.log('error submit!!');
-          return false;
-        }
-      })
-    }; 
-
-
-    /**
-     * 生命周期
-     */
-    // 挂载完成后
-    onMounted(() => {
-      console.log('挂载完成');
-    });
-
-
-    return { 
-      menuTab, 
-      model,
-      ruleForm,
-      ruleFormRef,
-      rules,
-      toggleMenu,
-      submitForm,
-    };
+      this.model = data.type;
+    },
+    submitForm(formName) {
+        this.$refs[formName].validate((valid) => {
+          if (valid) {
+            alert('submit!');
+          } else {
+            console.log('error submit!!');
+            return false;
+          }
+        });
+      }
   }
 };
 </script>
