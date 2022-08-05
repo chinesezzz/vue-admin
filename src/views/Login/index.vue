@@ -26,11 +26,11 @@
           <el-form-item prop="code" class="item-from">
           <label>验证码</label>
            <el-row :gutter="20">
-            <el-col :span="18">
+            <el-col :span="15">
               <el-input v-model.number="ruleForm.code" minlength="6" maxlength="6"></el-input>
             </el-col>
-            <el-col :span="6" class="block">
-              <el-button type="success">获取验证码</el-button>
+            <el-col :span="9">
+              <el-button type="success" class="block" @click="getSms()">获取验证码</el-button>
             </el-col>
           </el-row>
           </el-form-item>
@@ -43,9 +43,9 @@
   </div>
 </template>
 <script>
+import { GetSms } from '@/api/login'
 import { stripscript, validateEmail, validatePSW, validateVcode } from '@/uitls/validate';
 import { onMounted, reactive, ref, refs } from 'vue';
-import { FormInstance } from 'element-plus';
 
 export default {
   name: 'login',
@@ -145,6 +145,12 @@ export default {
       model.value = data.type;
     });
 
+    // 获取验证码
+    const getSms = (() => {
+        GetSms();
+    });
+
+    // 提交表单
     const submitForm = () => {
       ruleFormRef.value.validate((valid) => {
         if (valid) {
@@ -155,7 +161,6 @@ export default {
         }
       })
     }; 
-
 
     /**
      * 生命周期
@@ -174,6 +179,7 @@ export default {
       rules,
       toggleMenu,
       submitForm,
+      getSms,
     };
   }
 };
