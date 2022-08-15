@@ -2,37 +2,20 @@
   <div id="login">
     <div class="login-wrap">
         <ul class="menu-tab">
-          <li v-for="item in menuTab" :key="item.id" :class="{'current': item.current}" @click="toggleMenu(item)">
-            {{ item.txt }}
+          <li>
+            登 录
           </li>
         </ul>
         <!-- 表单 start -->
         <el-form :model="ruleForm" status-icon :rules="rules" ref="ruleFormRef" class="login-form" size="default">
-          <el-form-item prop="username" class="item-from">
+          <el-form-item prop="userName" class="item-from">
           <label>邮箱</label>
-            <el-input type="text" v-model="ruleForm.username" autocomplete="off"></el-input>
+            <el-input type="text" v-model="ruleForm.userName" autocomplete="off"></el-input>
           </el-form-item>
 
           <el-form-item prop="password" class="item-from">
           <label>密码</label>
             <el-input type="password" v-model="ruleForm.password" autocomplete="off" minlength="6" maxlength="20"></el-input>
-          </el-form-item>
-
-          <el-form-item prop="passwords" class="item-from" v-if="model === 'register'">
-          <label>重复密码</label>
-            <el-input type="password" v-model="ruleForm.passwords" autocomplete="off" minlength="6" maxlength="20"></el-input>
-          </el-form-item>
-
-          <el-form-item prop="code" class="item-from">
-          <label>验证码</label>
-           <el-row :gutter="20">
-            <el-col :span="15">
-              <el-input v-model.number="ruleForm.code" minlength="6" maxlength="6"></el-input>
-            </el-col>
-            <el-col :span="9">
-              <el-button type="success" class="block" @click="getSms()">获取验证码</el-button>
-            </el-col>
-          </el-row>
           </el-form-item>
 
           <el-form-item>
@@ -43,29 +26,25 @@
   </div>
 </template>
 <script>
-import { GetSms } from '@/api/login'
-import { stripscript, validateEmail, validatePSW, validateVcode } from '@/uitls/validate';
-import { onMounted, reactive, ref, refs } from 'vue';
+import { userLogin } from '@/api/login';
+import { stripscript, validateEmail, validatePSW } from '@/uitls/validate';
+import { reactive, ref } from 'vue';
+import { useRouter } from 'vue-router';
+import { ElMessage } from 'element-plus';
 
 export default {
   name: 'login',
-  setup(props, context) {
+  setup() {
     // 存放Data数据、生命周期、自定义函数
-    const menuTab = reactive([
-        {txt: '登录', current: true, type: 'login'},
-        {txt: '注册', current: false, type: 'register'}
-      ]);
-      // 模块值
-    const model = ref('login');
     // 表单绑定数据
     const ruleFormRef = ref(null);
     const ruleForm = reactive({
-          username: '',
+          userName: 'hugevision-scm @ ivision-china.cn',
           password: '',
-          passwords: '',
-          code: ''
         });
-    
+    // 路由
+    const router = useRouter();
+
       // 验证用户名
       let validateUserName = (rule, value, callback) => {
         
@@ -86,75 +65,53 @@ export default {
 
         if (value === '') {
           callback(new Error('请输入密码'));
-        }  else if(!validatePSW(value)){
-          callback(new Error('密码为6至20位数字+字母'));
-        }
-        else {
-          callback();
-        }
-      };
-      // 验证重复密码
-      let validatePasswords = (rule, value, callback) => {
-        // 过滤数据
-        ruleForm.passwords = stripscript(value);
-        value = ruleForm.passwords;
-        if (value === '') {
-          callback(new Error('请输入重复密码'));
-        }  else if(value != ruleForm.password){
-          callback(new Error('重复密码错误'));
-        }
-        else {
-          callback();
-        }
-      };
-      // 验证验证码
-      let validateCode = (rule, value, callback) => {
-        if (!value) {
-          return callback(new Error('验证码不能为空'));
-        } else if(!validateVcode(value)){
-          callback(new Error('验证码格式有误'));
-        }
+        } 
+        // else if(!validatePSW(value)){
+        //   callback(new Error('密码为6至20位数字+字母'));
+        // }
         else {
           callback();
         }
       };
     // 表单的验证
     const  rules = reactive({
-          username: [
+          userName: [
             { validator: validateUserName, trigger: 'blur' }
           ],
           password: [
             { validator: validatePassword, trigger: 'blur' }
-          ],
-          passwords: [
-            { validator: validatePasswords, trigger: 'blur' }
-          ],
-          code: [
-            { validator: validateCode, trigger: 'blur' }
           ]
         });
 
     /**
      * 声明函数
      */
-    const toggleMenu = (data => {
-      menuTab.forEach(elem => {
-        elem.current = false;
-      });
-      data.current = true;
-      model.value = data.type;
-    });
 
     // 获取验证码
-    const getSms = (() => {
-        GetSms();
-    });
+    // const getSms = (() => {
+    //   let data = {
+    //         userName: 'hugevision-scm @ ivision-china.cn',
+    //         password: '1'
+    //     };
+    // });  
 
     // 提交表单
     const submitForm = () => {
       ruleFormRef.value.validate((valid) => {
         if (valid) {
-          alert('submit!');
+          // 调用API
+          userLogin(ruleForm).then(res => {
+            router.push({
+              name: 'LoginOrg',
+              params: {
+                clients: JSON.stringify(res.data.clients),
+                token: res.data.token
+              }
+            })
+          }).catch(error => {
+            ElMessage.error('用户名或密码不正确！');
+          });
+
         } else {
           console.log('error submit!!');
           return false;
@@ -162,24 +119,11 @@ export default {
       })
     }; 
 
-    /**
-     * 生命周期
-     */
-    // 挂载完成后
-    onMounted(() => {
-      console.log('挂载完成');
-    });
-
-
     return { 
-      menuTab, 
-      model,
       ruleForm,
       ruleFormRef,
       rules,
-      toggleMenu,
       submitForm,
-      getSms,
     };
   }
 };
@@ -199,13 +143,10 @@ export default {
     display: inline-block;
     width: 88px;
     line-height: 36px;
-    font-size: 14px;
+    font-size: 19px;
     color: #fff;
     border-radius: 2px;
     cursor: pointer;
-  }
-  .current {
-    background-color: rgba(0, 0, 0, .1);
   }
 }
 .login-form {
